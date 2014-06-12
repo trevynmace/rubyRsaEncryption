@@ -34,37 +34,42 @@
     # n_to_s( m )
   end
 
-  def n_to_s( n )
-    s = ""
-    while( n > 0 )
-      s = ( n & 0xFF ).chr + s
-      n >>= 8
-    end
-    s
-  end
+# implement converting rules for string to number and number to string
+  # def n_to_s( n )
+  #   s = ""
+  #   while( n > 0 )
+  #     s = ( n & 0xFF ).chr + s
+  #     n >>= 8
+  #   end
+  #   s
+  # end
+  #
+  # def s_to_n( s )
+  #   n = 0
+  #   s.each_byte do |b|
+  #     n = n * 256 + b
+  #   end
+  #   n
+  # end
 
-  def s_to_n( s )
-    n = 0
-    s.each_byte do |b|
-      n = n * 256 + b
+  def greatestCommonDivisor(a, b)
+    if a % b == 0
+      return [0,1]
     end
-    n
-  end
-
-  def extended_gcd( a, b )
-    return [0,1] if a % b == 0
-    x, y = extended_gcd( b, a % b )
+    x, y = greatestCommonDivisor(b, a % b)
     [y, x - y * (a / b)]
   end
 
   def get_d(p, q, e)
-    t = phi( p, q )
-    x, y = extended_gcd( e, t )
-    x += t if x < 0
-   x
+    t = totient(p, q)
+    x, y = greatestCommonDivisor(e, t)
+    if x < 0
+      x += t
+    end
+    x
   end
 
-  def phi( p, q )
+  def totient(p, q)
     (p - 1) * (q - 1)
   end
 
@@ -75,18 +80,17 @@ q = 67
 n = p * q
 d = get_d(p, q, e)
 
+# change this to the correct message
 m = 65
 
 puts "public exponent    : " + e.to_s
 puts "public modulus     : " + n.to_s
-puts "private key exp    : " + d.to_s
+puts "private key exp    : " + d.to_s + "\n\n"
 
-puts ""
-puts "Message        : %s" % m
-puts ""
+puts "Message            : " + m.to_s + "\n\n"
 
-c = encrypt( m, e, n )
+encryptedMessage = encrypt( m, e, n )
+puts "Encrypted          : " + encryptedMessage.to_s + "\n"
 
-puts "Encrypted      : " + c.to_s
-puts ""
-puts "Decrypted      : " + decrypt( c, n, d ).to_s
+decryptedMessage = decrypt(encryptedMessage, n, d)
+puts "Decrypted          : " + decryptedMessage.to_s
