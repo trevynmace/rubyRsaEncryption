@@ -1,130 +1,115 @@
 # base used in modular exponentiation
-  def base(n, b)
-    q = n
-    a = []
-    while q != 0
-      a.push(q % b)
-      q = (q/b).floor
-    end
-    return a
+def base(n, b)
+  q = n
+  a = []
+  while q != 0
+    a.push(q % b)
+    q = (q/b).floor
   end
+  return a
+end
 
 # modular exponentiation
-  def mod(b, n, m)
-    a = base(n, 2)
-    x = 1
-    pow = b % m
-    for i in (0..a.length)
-      if (a[i] == 1)
-        x = (x * pow) % m
-      end
-      pow = (pow * pow) % m
+def mod(b, n, m)
+  a = base(n, 2)
+  x = 1
+  pow = b % m
+  for i in (0..a.length)
+    if (a[i] == 1)
+      x = (x * pow) % m
     end
-    return x
+    pow = (pow * pow) % m
   end
+  return x
+end
 
-# def mod(base, power, mod)
-#   res = 1
-#   while power > 0
-#     res = (res * base) % mod if power & 1 == 1
-#     base = base ** 2 % mod
-#     power >>= 1
-#   end
-#   res
-# end
-
-  def encrypt(message, e, n)
-    #FIXME: need to convert string to integers
-    # when converting to ascii, pad with 0 if only size of 2, keep everything 3 characters long.
-    # when decrypting, if starts with 0, remove the 0 and convert back to character,
-    # that way decrypting can get every 3 characters no matter what
-    encryptedList = []
-    m = s_to_n(message)
-    for i in (0..m.length)
-      encryptedList.push(mod(m[i].to_i, e, n))
-      encryptedList.push("/")
-    end
-    encryptedList
+# function to encrypt the message to a number
+def encrypt(message, e, n)
+  encryptedList = []
+  m = stringToNum(message)
+  for i in (0..m.length)
+    encryptedList.push(mod(m[i].to_i, e, n))
+    encryptedList.push("0320")
   end
+  encryptedList
+end
 
-  def decrypt(c, n, d)
-    m = mod(c, d, n)
-    # n_to_s(m)
+# function to decrypt the number message back to a string
+def decrypt(c, n, d)
+  list = c.split("0320").map(&:to_i)
+  intList = []
+  for i in 0..list.length
+    intList.push(mod(list[i].to_i, d, n))
   end
-
-# implement converting rules for string to number and number to string
-  def n_to_s(n)
-    s = ""
-    while(n > 0)
-      s = ( n & 0xFF ).chr + s
-      n >>= 8
-    end
-    #FIXME: make sure to return a string
-    s
+  returnString = ""
+  for i in 0..intList.length
+    returnString += numToString(intList[i].to_i)
   end
+  returnString
+end
 
-  def s_to_n(s)
-    n = []
-    s.each_byte do |b|
-      n.push(b)
-    end
-    n
+# function to convert numbers to strings
+def numToString(n)
+  s = ""
+  while(n > 0)
+    s = (n & 0xFF).chr + s
+    n >>= 8
   end
+  s
+end
 
-  def greatestCommonDivisor(a, b)
-    if a % b == 0
-      return [0,1]
-    end
-    x, y = greatestCommonDivisor(b, a % b)
-    [y, x - y * (a / b)]
+# function to convert strings to numbers
+def stringToNum(s)
+  n = []
+  s.each_byte do |b|
+    n.push(b)
   end
+  n
+end
 
-  def calculateD(p, q, e)
-    t = totient(p, q)
-    x, y = greatestCommonDivisor(e, t)
-    if x < 0
-      x += t
-    end
-    x
+# function to get the greatest common divisor for calculating d
+def greatestCommonDivisor(a, b)
+  if a % b == 0
+    return [0,1]
   end
+  x, y = greatestCommonDivisor(b, a % b)
+  [y, x - y*(a / b)]
+end
 
-  def totient(p, q)
-    (p - 1) * (q - 1)
+# function to calculate the value of the private key exponent
+def calculateD(p, q, e)
+  t = totient(p, q)
+  x, y = greatestCommonDivisor(e, t)
+  if x < 0
+    x += t
   end
+  x
+end
 
+# function to calculate the totient of n
+def totient(p, q)
+  (p - 1) * (q - 1)
+end
+
+# given variables
 e = 17
 p = 71
 q = 67
 n = p * q
 d = calculateD(p, q, e)
-
-# FIXME: change this to the correct message
-m = "I hope this works"
+m = "The Queen Can't Roll When Sand is in the Jar"
 
 puts "public exponent    (e): " + e.to_s
 puts "public modulus     (n): " + n.to_s
-puts "private key exp    (d): " + d.to_s + "\n\n"
-
-puts "Message            (m): " + m.to_s + "\n"
+puts "private key exp    (d): " + d.to_s
+puts "Message            (m): " + m.to_s + "\n\n"
 
 encryptedMessage = encrypt(m, e, n)
 encryptedMessageString = ""
 for i in 0..(encryptedMessage.length - 1)
   encryptedMessageString += encryptedMessage[i].to_s
 end
-puts "Encrypted          : " + encryptedMessageString.to_s
+puts "Encrypted             : " + encryptedMessageString.to_s
 
-#FIXME: uncomment for decryption
-# decryptedMessage = decrypt(encryptedMessage, n, d)
-# puts "Decrypted          : " + decryptedMessage.to_s
-
-
-# c is the encrypted message
-# m^e mod n = c
-# c^d mod n = m
-
-
-# the number being put into mod() has to be less than n to work properly
-# put the values through mod() by themselves and push to a list
-
-# problem now is the separator between numbers representing letters. can't use a number combination because there's always a chance that it will be somewhere else
+decryptedMessage = decrypt(encryptedMessageString, n, d)
+puts "Decrypted             : " + decryptedMessage.to_s
